@@ -20,7 +20,13 @@ from rest_framework import status
 class StudentListView(APIView):
     def get(self,request):
         Students = Student.objects.all()
-        serializer = StudentSerializer(Students,many=True)
+        first_name = request.query_params.get("first_name")
+        if first_name:
+            Students = Students.filter(first_name = first_name)
+        country = request.query_params.get("country")    
+        if country:
+            country = Students.filter(country=country)    
+        serializer = StudentSerializer(country,many=True)
         return Response(serializer.data)
     
     def post(self, request):
@@ -101,7 +107,18 @@ class StudentDetailView(APIView):
         student = Student.objects.get(id=id)
         serializer = StudentSerializer(student)
         return Response(serializer.data)
-    
+    def enroll (self, student, course_id):
+        course = Courses.objects.get(id=course_id)
+        student.courses.add(course)
+    def post(self, request,id):
+        Student = Student.objects.get(id=id)
+        action = request.data.get("action")
+        if action =="enroll":
+            course_id = request.data.get(self.enroll(Student, course_id))
+            return Response (status=status.HTTP_201_CREATED)
+         
+        
+     
     def put(self,request,id):
         student = Student.objects.get(id=id)
         serializer = StudentSerializer(student, data=request.data)
